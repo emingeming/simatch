@@ -16,6 +16,7 @@ const double        g = 9.8;                    // gravity coefficient
 const double        m = 0.41;                   // ball mass (kg)
 
 using namespace gazebo;
+using namespace ignition;//// nieyiming29/02/2020 10:51:22
 GZ_REGISTER_MODEL_PLUGIN(BallGazebo)
 
 BallGazebo::BallGazebo()
@@ -53,7 +54,7 @@ void BallGazebo::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 
 void BallGazebo::UpdateChild()
 {
-    static math::Vector3 ball_vel(0, 0, 0);
+    static math::Vector3d ball_vel(0, 0, 0);
 
     // detect_ball_out();
     if(std::sqrt(vel_x_*vel_x_+vel_y_*vel_y_)>1)
@@ -67,13 +68,13 @@ void BallGazebo::UpdateChild()
 
 void BallGazebo::ball_vel_decay(double mu)
 {
-    math::Vector3   vel = football_model_->GetWorldLinearVel();
-    static double   last_vel_len = vel.GetLength();
-    double          vel_len = vel.GetLength();
+    math::Vector3d   vel = football_model_->WorldLinearVel();
+    static double   last_vel_len = vel.Length();
+    double          vel_len = vel.Length();
 
     if(vel_len > 0.0)
     {
-        if(football_model_->GetWorldPose().pos.z <= 0.12 &&
+        if(football_model_->RelativePose().Pos().Z() <= 0.12 && ////nieyiming01/03/2020 06:41:30  if(football_model_->GetWorldPose().pos.z <=
                 !(last_vel_len - vel_len > 0) )     // when the ball is not in the air && when
                                                     // it does not decelerate anymore
         {
@@ -84,7 +85,7 @@ void BallGazebo::ball_vel_decay(double mu)
     else if(vel_len <= 0.0)
     {
         vel_len = 0.0;
-        football_model_->SetLinearVel(math::Vector3::Zero);
+        football_model_->SetLinearVel(math::Vector3d::Zero);
     }
 
     last_vel_len = vel_len;
@@ -92,21 +93,21 @@ void BallGazebo::ball_vel_decay(double mu)
 
 void BallGazebo::detect_ball_out(void)
 {
-    double pos_x = football_model_->GetWorldPose().pos.x;
-    double pos_y = football_model_->GetWorldPose().pos.y;
+    double pos_x = football_model_->RelativePose().Pos().X();////nieyiming01/03/2020 06:41:30 
+    double pos_y = football_model_->RelativePose().Pos().Y();////nieyiming01/03/2020 06:41:36 
     int a = pos_x > 0? 1 : -1;
     int b = pos_y > 0? 1 : -1;
 
     if(fabs(pos_x)>field_length_/2.0)
     {
-        math::Pose  target_pose( math::Vector3 (a*(field_length_/2.0-0.02), pos_y, 0.12), math::Quaternion(0,0,0) );
+        math::Pose3d  target_pose( math::Vector3d (a*(field_length_/2.0-0.02), pos_y, 0.12), math::Quaterniond(0,0,0) );
         football_model_->SetWorldPose(target_pose);
-        football_model_->SetLinearVel(math::Vector3::Zero);
+        football_model_->SetLinearVel(math::Vector3d::Zero);
     }
     else if(fabs(pos_y) > field_width_/2.0)
     {
-        math::Pose  target_pose( math::Vector3 (pos_x, b*(field_width_/2.0 - 0.02), 0.12), math::Quaternion(0,0,0) );
+        math::Pose3d  target_pose( math::Vector3d (pos_x, b*(field_width_/2.0 - 0.02), 0.12), math::Quaterniond(0,0,0) );
         football_model_->SetWorldPose(target_pose);
-        football_model_->SetLinearVel(math::Vector3::Zero);
+        football_model_->SetLinearVel(math::Vector3d::Zero);
     }
 }
